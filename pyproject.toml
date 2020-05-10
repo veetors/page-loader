@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "veetors_page_loader"
 version = "0.0.1"
-description = "Page loader"
+description = "CLI tool that downloads the internet page and put it in the specified folder"
 authors = ["veetors <veetor.s@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/veetors/python-project-lvl3"

@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 
-from page_loader.app import load
+"""CLI tool that downloads the internet page."""
 
-__all__ = (
+from page_loader.app import load  # noqa: WPS347
+
+__all__ = (  # noqa: WPS410
     'load',
 )
