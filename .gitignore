@@ -1,0 +1,12 @@
+.venv/
+.idea/
+.vscode/
+dist/
+__pycache__/
+
+.env
+.python-version
+*.egg-info
+*.pyc
+.coverage
+coverage.xml
