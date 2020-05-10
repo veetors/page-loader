@@ -7,3 +7,6 @@
 
 ## Installation
 `pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple veetors-page-loader`
+
+### Download page
+[![plain_json](https://asciinema.org/a/YsqT0O3nbQwMnIYW529dHcp0S.png)](https://asciinema.org/a/YsqT0O3nbQwMnIYW529dHcp0S)
