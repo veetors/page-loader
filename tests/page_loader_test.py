@@ -1,10 +1,11 @@
 # -*- coding:utf-8 -*-
 
 import os
+import tempfile
 
 import page_loader
 
-TEST_URL = 'https://test-url.com'
+TEST_URL = 'https://hexlet.io/courses'
 
 
 def get_fixtures_path(filename):
@@ -17,6 +18,10 @@ def test_page_loader(requests_mock):
 
     requests_mock.get(TEST_URL, text=expected)
 
-    acctual = page_loader.load(TEST_URL)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        page_loader.load(TEST_URL, tmpdirname)
+
+        with open(os.path.join(tmpdirname, 'test.html')) as acctual_file:
+            acctual = acctual_file.read()
 
     assert acctual == expected
