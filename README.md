@@ -6,4 +6,4 @@
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 
 ## Installation
-`pip install --index-url https://test.pypi.org/simple veetors-page-loader`
+`pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple veetors-page-loader`
