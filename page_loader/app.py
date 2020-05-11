@@ -23,11 +23,17 @@ def load(url, output_path=None):
     Args:
         url (str): target url
         output_path (str): path for output file
+
+    Raises:
+        ValueError: page not found
     """
     if not output_path:
         output_path = os.getcwd()
 
     response = requests.get(url)
+
+    if response.status_code == 404:
+        raise ValueError('Page not found.')
 
     filename = get_filename(url)
 
