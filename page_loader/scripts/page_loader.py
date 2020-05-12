@@ -30,15 +30,18 @@ def main():
 
     try:
         page_loader.load(args.url, args.output)
+
     except requests.exceptions.RequestException:
         print('Connection error.')
         sys.exit(1)
+
     except ValueError as e:  # noqa: WPS111
         if str(e) == 'Page not found.':
             print(str(e))
             sys.exit(1)
         else:
             raise
+
     except FileNotFoundError:
         print('The output directory does not exist.')
         sys.exit(1)

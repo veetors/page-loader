@@ -22,6 +22,7 @@ page-loader = "page_loader.scripts.page_loader:main"
 [tool.poetry.dependencies]
 python = "^3.6"
 requests = "^2.23.0"
+beautifulsoup4 = "^4.9.0"
 
 [tool.poetry.dev-dependencies]
 wemake-python-styleguide = "^0.14.0"

@@ -7,6 +7,7 @@ import re
 from urllib.parse import urlparse
 
 import requests
+from bs4 import BeautifulSoup
 
 
 def get_filename(url):  # noqa: D103
@@ -15,6 +16,25 @@ def get_filename(url):  # noqa: D103
     return '{0}.html'.format(
         re.sub('[^0-9a-zA-Z]+', '-', parsed_url.netloc + parsed_url.path),
     )
+
+
+def parse_doc(doc):
+    soup = BeautifulSoup(doc, 'html.parser')
+
+    assets = []
+    tags = [*soup('script'), *soup('link'), *soup('img')]
+
+    for tag in tags:
+        url_attr = 'href' if tag.name == 'link' else 'src'
+        url = tag.get(url_attr)
+
+        if not url:
+            continue
+
+        if not urlparse(url).netloc:
+            assets.append(url)
+
+    print(assets)
 
 
 def load(url, output_path=None):
@@ -34,6 +54,8 @@ def load(url, output_path=None):
 
     if response.status_code == 404:
         raise ValueError('Page not found.')
+
+    parse_doc(response.text)
 
     filename = get_filename(url)
 

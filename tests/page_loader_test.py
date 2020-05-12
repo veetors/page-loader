@@ -17,8 +17,8 @@ def get_fixtures_path(filename):  # noqa: D103
     return os.path.join(os.getcwd(), 'tests', 'fixtures', filename)
 
 
-def test_page_loader(requests_mock):  # noqa: D103
-    with open(get_fixtures_path('expected.html')) as expected_file:
+def test_main_without_assets(requests_mock):  # noqa: D103
+    with open(get_fixtures_path('without_assets.html')) as expected_file:
         expected = expected_file.read()
 
     requests_mock.get(TEST_URL, text=expected)
@@ -30,6 +30,33 @@ def test_page_loader(requests_mock):  # noqa: D103
             acctual = acctual_file.read()
 
     assert acctual == expected
+
+
+def test_main_with_assets(requests_mock):  # noqa: D103
+    with open(get_fixtures_path('with_assets.html')) as expected_file:
+        expected_main_content = expected_file.read()
+
+    requests_mock.get(TEST_URL, text=expected_main_content)
+    requests_mock.get('https://hexlet.io/assets/application.js')
+    requests_mock.get('https://hexlet.io/assets/application.css')
+    requests_mock.get('https://hexlet.io/assets/image.jpg')
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        page_loader.load(TEST_URL, tmpdirname)
+
+        with open(os.path.join(tmpdirname, TEST_FILENAME)) as acctual_file:
+            acctual_main_content = acctual_file.read()
+
+        assert acctual_main_content == expected_main_content
+        assert os.path.exists(os.path.join(
+            tmpdirname, 'hexlet-io-courses', 'assets-application.js',
+        ))
+        assert os.path.exists(os.path.join(
+            tmpdirname, 'hexlet-io-courses', 'assets-application.css',
+        ))
+        assert os.path.exists(os.path.join(
+            tmpdirname, 'hexlet-io-courses', 'assets-image.jpg',
+        ))
 
 
 def test_page_not_found(requests_mock):  # noqa: D103
