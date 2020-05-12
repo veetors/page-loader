@@ -9,12 +9,29 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
+REGEXP = '[^0-9a-zA-Z]+'
 
-def get_filename(url):  # noqa: D103
+
+def get_filename_from_url(url):  # noqa: D103
     parsed_url = urlparse(url)
 
     return '{0}.html'.format(
-        re.sub('[^0-9a-zA-Z]+', '-', parsed_url.netloc + parsed_url.path),
+        re.sub(REGEXP, '-', parsed_url.netloc + parsed_url.path),
+    )
+
+
+def get_filename_from_path(path):  # noqa: D103
+    filepath, extansion = os.path.splitext(path)
+    formated_path = re.sub(REGEXP, '-', filepath[1:])
+
+    return formated_path + extansion
+
+
+def get_dirname(url):  # noqa: D103
+    parsed_url = urlparse(url)
+
+    return '{0}_files'.format(
+        re.sub(REGEXP, '-', parsed_url.netloc + parsed_url.path),
     )
 
 
@@ -57,7 +74,7 @@ def load(url, output_path=None):
 
     parse_doc(response.text)
 
-    filename = get_filename(url)
+    filename = get_filename_from_url(url)
 
     with open(os.path.join(output_path, filename), 'w') as output_file:
         output_file.write(response.text)
