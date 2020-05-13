@@ -18,10 +18,12 @@ def get_fixtures_path(filename):  # noqa: D103
 
 
 def test_main_without_assets(requests_mock):  # noqa: D103
-    with open(get_fixtures_path('without_assets.html')) as expected_file:
-        expected = expected_file.read()
+    with open(get_fixtures_path('without_assets_before.html')) as mock_file:
+        mock_content = mock_file.read()
+    requests_mock.get(TEST_URL, text=mock_content)
 
-    requests_mock.get(TEST_URL, text=expected)
+    with open(get_fixtures_path('without_assets_after.html')) as expected_file:
+        expected = expected_file.read()
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         page_loader.load(TEST_URL, tmpdirname)
@@ -33,13 +35,18 @@ def test_main_without_assets(requests_mock):  # noqa: D103
 
 
 def test_main_with_assets(requests_mock):  # noqa: D103
-    with open(get_fixtures_path('with_assets.html')) as expected_file:
-        expected_main_content = expected_file.read()
+    with open(get_fixtures_path('with_assets_before.html')) as mock_file:
+        mock_content = mock_file.read()
 
-    requests_mock.get(TEST_URL, text=expected_main_content)
+    requests_mock.get(TEST_URL, text=mock_content)
     requests_mock.get('https://hexlet.io/assets/application.js')
     requests_mock.get('https://hexlet.io/assets/application.css')
     requests_mock.get('https://hexlet.io/assets/image.jpg')
+
+    with open(
+        get_fixtures_path('with_assets_after.html'),
+    ) as expected_html_file:
+        expected_html = expected_html_file.read()
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         page_loader.load(TEST_URL, tmpdirname)
@@ -47,15 +54,15 @@ def test_main_with_assets(requests_mock):  # noqa: D103
         with open(os.path.join(tmpdirname, TEST_FILENAME)) as acctual_file:
             acctual_main_content = acctual_file.read()
 
-        assert acctual_main_content == expected_main_content
+        assert acctual_main_content == expected_html
         assert os.path.exists(os.path.join(
-            tmpdirname, 'hexlet-io-courses', 'assets-application.js',
+            tmpdirname, 'hexlet-io-courses_files', 'assets-application.js',
         ))
         assert os.path.exists(os.path.join(
-            tmpdirname, 'hexlet-io-courses', 'assets-application.css',
+            tmpdirname, 'hexlet-io-courses_files', 'assets-application.css',
         ))
         assert os.path.exists(os.path.join(
-            tmpdirname, 'hexlet-io-courses', 'assets-image.jpg',
+            tmpdirname, 'hexlet-io-courses_files', 'assets-image.jpg',
         ))
 
 
