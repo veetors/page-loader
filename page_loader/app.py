@@ -12,58 +12,61 @@ from bs4 import BeautifulSoup
 REGEXP = '[^0-9a-zA-Z]+'
 
 
-def get_filename_from_url(url):  # noqa: D103
+def format_name(url, directory=False):  # noqa: D103
     parsed_url = urlparse(url)
+    base = re.sub(REGEXP, '-', parsed_url.netloc + parsed_url.path)
+    suffix = '_files' if directory else '.html'
 
-    return '{0}.html'.format(
-        re.sub(REGEXP, '-', parsed_url.netloc + parsed_url.path),
-    )
+    return base + suffix
 
 
-def get_filename_from_path(path):  # noqa: D103
+def format_asset_name(path):  # noqa: D103
     filepath, extansion = os.path.splitext(path)
     formated_path = re.sub(REGEXP, '-', filepath[1:])
 
     return formated_path + extansion
 
 
-def get_dirname(url):  # noqa: D103
-    parsed_url = urlparse(url)
-
-    return '{0}_files'.format(
-        re.sub(REGEXP, '-', parsed_url.netloc + parsed_url.path),
-    )
-
-
-def get_assets(doc):
-    soup = BeautifulSoup(doc, 'html.parser')
+def format_html(html, url):  # noqa: WPS210, D103
+    page = BeautifulSoup(html, 'html.parser')
+    scheme, netloc, *_ = urlparse(url)
 
     assets = []
-    tags = [*soup('script'), *soup('link'), *soup('img')]
+    tags = [*page('script'), *page('link'), *page('img')]  # noqa: WPS221
 
     for tag in tags:
-        url_attr = 'href' if tag.name == 'link' else 'src'
-        url = tag.get(url_attr)
+        current_attr = 'href' if tag.name == 'link' else 'src'
+        asset_url = tag.get(current_attr)
 
-        if not url:
+        if not asset_url or urlparse(asset_url).netloc:
             continue
 
-        if not urlparse(url).netloc:
-            assets.append(url)
+        full_asset_url = '{0}://{1}{2}'.format(scheme, netloc, asset_url)
+        assets.append({
+            'url': full_asset_url,
+            'filename': format_asset_name(asset_url),
+        })
+        tag[current_attr] = '{0}/{1}'.format(
+            format_name(url, directory=True),
+            format_asset_name(asset_url),
+        )
 
-    return assets
-
-
-def download_asset(url, path, output_path):
-    response = requests.get(url + path)
-
-    filename = get_filename_from_path(path)
-
-    with open(os.path.join(output_path, filename), 'w') as output_file:
-        output_file.write(response.text)
+    return (page.prettify(formatter='html5'), assets)
 
 
-def load(url, output_path=None):
+def download_assets(assets, output_path):  # noqa: D103
+    os.mkdir(output_path)
+
+    for asset in assets:
+        response = requests.get(asset['url'])
+
+        with open(
+            os.path.join(output_path, asset['filename']), 'w',
+        ) as output_file:
+            output_file.write(response.text)
+
+
+def load(url, output_path=None):  # noqa: WPS210
     """Load the page at the appropriate url and write to a file.
 
     Args:
@@ -81,26 +84,18 @@ def load(url, output_path=None):
     if response.status_code == 404:
         raise ValueError('Page not found.')
 
-    main_file_name = get_filename_from_url(url)
+    html_file_name = format_name(url)
 
-    with open(os.path.join(output_path, main_file_name), 'w') as output_file:
-        output_file.write(response.text)
+    html, assets = format_html(response.text, url)
 
-    assets = get_assets(response.text)
-    print('assets', assets)
+    with open(os.path.join(output_path, html_file_name), 'w') as html_file:
+        html_file.write(html)
 
     if not assets:
         return
 
-    assets_dir_path = os.path.join(output_path, get_dirname(url))
+    assets_dir_path = os.path.join(
+        output_path, format_name(url, directory=True),
+    )
 
-    print('assets_dir_path', assets_dir_path)
-
-    os.mkdir(assets_dir_path)
-
-    for asset in assets:
-        download_asset(
-            url=urlparse(url).scheme + '://' + urlparse(url).netloc,
-            path=asset,
-            output_path=assets_dir_path,
-        )
+    download_assets(assets, assets_dir_path)
