@@ -35,7 +35,7 @@ def get_dirname(url):  # noqa: D103
     )
 
 
-def parse_doc(doc):
+def get_assets(doc):
     soup = BeautifulSoup(doc, 'html.parser')
 
     assets = []
@@ -51,7 +51,16 @@ def parse_doc(doc):
         if not urlparse(url).netloc:
             assets.append(url)
 
-    print(assets)
+    return assets
+
+
+def download_asset(url, path, output_path):
+    response = requests.get(url + path)
+
+    filename = get_filename_from_path(path)
+
+    with open(os.path.join(output_path, filename), 'w') as output_file:
+        output_file.write(response.text)
 
 
 def load(url, output_path=None):
@@ -72,9 +81,26 @@ def load(url, output_path=None):
     if response.status_code == 404:
         raise ValueError('Page not found.')
 
-    parse_doc(response.text)
+    main_file_name = get_filename_from_url(url)
 
-    filename = get_filename_from_url(url)
-
-    with open(os.path.join(output_path, filename), 'w') as output_file:
+    with open(os.path.join(output_path, main_file_name), 'w') as output_file:
         output_file.write(response.text)
+
+    assets = get_assets(response.text)
+    print('assets', assets)
+
+    if not assets:
+        return
+
+    assets_dir_path = os.path.join(output_path, get_dirname(url))
+
+    print('assets_dir_path', assets_dir_path)
+
+    os.mkdir(assets_dir_path)
+
+    for asset in assets:
+        download_asset(
+            url=urlparse(url).scheme + '://' + urlparse(url).netloc,
+            path=asset,
+            output_path=assets_dir_path,
+        )
