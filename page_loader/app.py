@@ -10,6 +10,8 @@ import requests
 from bs4 import BeautifulSoup
 
 REGEXP = '[^0-9a-zA-Z]+'
+URL = 'url'
+FILENAME = 'filename'
 
 
 def format_name(url, directory=False):  # noqa: D103
@@ -43,8 +45,8 @@ def format_html(html, url):  # noqa: WPS210, D103
 
         full_asset_url = '{0}://{1}{2}'.format(scheme, netloc, asset_url)
         assets.append({
-            'url': full_asset_url,
-            'filename': format_asset_name(asset_url),
+            URL: full_asset_url,
+            FILENAME: format_asset_name(asset_url),
         })
         tag[current_attr] = '{0}/{1}'.format(
             format_name(url, directory=True),
@@ -56,14 +58,14 @@ def format_html(html, url):  # noqa: WPS210, D103
 
 def download_assets(assets, output_path):  # noqa: D103
     os.mkdir(output_path)
-
     for asset in assets:
-        response = requests.get(asset['url'])
+        response = requests.get(asset[URL], stream=True)
 
         with open(
-            os.path.join(output_path, asset['filename']), 'w',
+            os.path.join(output_path, asset[FILENAME]), 'wb',
         ) as output_file:
-            output_file.write(response.text)
+            for chunk in response:
+                output_file.write(chunk)
 
 
 def load(url, output_path=None):  # noqa: WPS210
@@ -85,9 +87,7 @@ def load(url, output_path=None):  # noqa: WPS210
         raise ValueError('Page not found.')
 
     html_file_name = format_name(url)
-
     html, assets = format_html(response.text, url)
-
     with open(os.path.join(output_path, html_file_name), 'w') as html_file:
         html_file.write(html)
 
@@ -97,5 +97,4 @@ def load(url, output_path=None):  # noqa: WPS210
     assets_dir_path = os.path.join(
         output_path, format_name(url, directory=True),
     )
-
     download_assets(assets, assets_dir_path)
