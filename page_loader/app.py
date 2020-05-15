@@ -4,6 +4,7 @@
 
 import os
 import re
+from multiprocessing.dummy import Pool as ThreadPool
 from urllib.parse import urlparse
 
 import requests
@@ -12,6 +13,7 @@ from bs4 import BeautifulSoup
 REGEXP = '[^0-9a-zA-Z]+'
 URL = 'url'
 FILENAME = 'filename'
+OUTPUT_PATH = 'output_path'
 
 
 def format_name(url, directory=False):  # noqa: D103
@@ -56,16 +58,25 @@ def format_html(html, url):  # noqa: WPS210, D103
     return (page.prettify(formatter='html5'), assets)
 
 
+def download_asset(asset):  # noqa: D103
+    response = requests.get(asset[URL], stream=True)
+    with open(
+        os.path.join(asset[OUTPUT_PATH], asset[FILENAME]), 'wb',
+    ) as output_file:
+        for chunk in response:
+            output_file.write(chunk)
+
+
 def download_assets(assets, output_path):  # noqa: D103
     os.mkdir(output_path)
-    for asset in assets:
-        response = requests.get(asset[URL], stream=True)
 
-        with open(
-            os.path.join(output_path, asset[FILENAME]), 'wb',
-        ) as output_file:
-            for chunk in response:
-                output_file.write(chunk)
+    assets_with_path = map(
+        lambda asset: {**asset, OUTPUT_PATH: output_path},
+        assets,
+    )
+
+    with ThreadPool(8) as pool:
+        pool.map(download_asset, assets_with_path)
 
 
 def load(url, output_path=None):  # noqa: WPS210
