@@ -9,6 +9,8 @@ import pytest
 
 import page_loader
 
+page_loader.logger.init()
+
 TEST_URL = 'https://hexlet.io/courses'
 HTML_FILENAME = 'hexlet-io-courses.html'
 ASSETS_DIRNAME = 'hexlet-io-courses_files'

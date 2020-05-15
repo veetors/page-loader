@@ -3,30 +3,24 @@
 
 """Package entry point."""
 
-import argparse
 import sys
 
 import requests
 
 import page_loader
+from page_loader import logger, parser
 
 
-def get_parser():  # noqa: D103
-    parser = argparse.ArgumentParser(description='Download the internet page')
-    parser.add_argument('url')
-    parser.add_argument(
-        '-O',
-        '--output',
-        type=str,
-        help='path to output folder (default: current working directory)',
-    )
-    return parser
-
-
-def main():
+def main():  # noqa: WPS213
     """Run main function."""  # noqa: DAR401
-    parser = get_parser()
-    args = parser.parse_args()
+    args_parser = parser.get()
+    args = args_parser.parse_args()
+
+    logger.init(args.logging)
+    log = logger.get(__name__)
+
+    log.debug(args.url)
+    log.debug(args.output)
 
     try:
         page_loader.load(args.url, args.output)

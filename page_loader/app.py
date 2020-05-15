@@ -10,10 +10,14 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
+from page_loader import logger
+
 REGEXP = '[^0-9a-zA-Z]+'
 URL = 'url'
 FILENAME = 'filename'
 OUTPUT_PATH = 'output_path'
+
+log = logger.get(__name__)
 
 
 def format_name(url, directory=False):  # noqa: D103
@@ -108,4 +112,5 @@ def load(url, output_path=None):  # noqa: WPS210
     assets_dir_path = os.path.join(
         output_path, format_name(url, directory=True),
     )
+    log.debug(assets_dir_path)
     download_assets(assets, assets_dir_path)
