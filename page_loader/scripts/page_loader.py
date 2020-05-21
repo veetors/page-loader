@@ -40,6 +40,10 @@ def main():  # noqa: WPS213
         print('The output directory does not exist.')
         sys.exit(1)
 
+    except PermissionError:
+        print('Permission denied: {0}'.format(args.output))
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

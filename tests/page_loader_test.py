@@ -126,3 +126,15 @@ def test_wrong_output_path(requests_mock):  # noqa: D103
                 TEST_URL,
                 os.path.join(tmpdirname, 'wrong_path'),
             )
+
+
+def test_no_access_to_output_path(requests_mock):  # noqa: D103
+    requests_mock.get(TEST_URL)
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with pytest.raises(PermissionError):
+            os.chmod(tmpdirname, 0o400)
+            assert page_loader.load(
+                TEST_URL,
+                os.path.join(tmpdirname),
+            )
