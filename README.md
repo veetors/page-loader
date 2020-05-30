@@ -10,3 +10,6 @@
 
 ### Download page
 [![plain_json](https://asciinema.org/a/YsqT0O3nbQwMnIYW529dHcp0S.png)](https://asciinema.org/a/YsqT0O3nbQwMnIYW529dHcp0S)
+
+### Debug
+[![plain_json](https://asciinema.org/a/mxekgeN52hUqfpWxmPW35xfmb.png)](https://asciinema.org/a/mxekgeN52hUqfpWxmPW35xfmb)
