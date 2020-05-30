@@ -2,14 +2,19 @@
 
 """Page-loader tests."""
 
+import logging
 import os
 import tempfile
 
 import pytest
+import requests
 
 import page_loader
 
-page_loader.logger.init()
+logging.basicConfig(
+    format='%(name)s:%(levelname)s:%(message)s',  # noqa: WPS323
+    level=logging.DEBUG,
+)
 
 TEST_URL = 'https://hexlet.io/courses'
 HTML_FILENAME = 'hexlet-io-courses.html'
@@ -56,7 +61,7 @@ def get_fixtures_path(filename):  # noqa: D103
     return os.path.join(os.getcwd(), 'tests', 'fixtures', filename)
 
 
-def test_main_without_assets(requests_mock):  # noqa: D103
+def test_main_without_assets(requests_mock):  # noqa: D103, WPS210
     with open(get_fixtures_path('without_assets_before.html')) as mock_file:
         mock_content = mock_file.read()
     requests_mock.get(TEST_URL, text=mock_content)
@@ -74,7 +79,7 @@ def test_main_without_assets(requests_mock):  # noqa: D103
 
 
 @pytest.mark.parametrize('asset', ASSETS)
-def test_main_with_assets(requests_mock, asset):  # noqa: D103
+def test_main_with_assets(requests_mock, asset):  # noqa: D103, WPS210
     with open(get_fixtures_path('with_assets_before.html')) as mock_html_file:
         mock_html_content = mock_html_file.read()
     requests_mock.get(TEST_URL, text=mock_html_content)
@@ -109,12 +114,29 @@ def test_main_with_assets(requests_mock, asset):  # noqa: D103
 
 
 def test_page_not_found(requests_mock):  # noqa: D103
-    requests_mock.get(TEST_URL, status_code=404)
+    url = '{0}/status/404'.format(TEST_URL)
+    requests_mock.get(url, status_code=404)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        with pytest.raises(ValueError) as wrapped_e:
-            page_loader.load(TEST_URL, tmpdirname)
-        assert str(wrapped_e.value) == 'Page not found.'  # noqa: WPS441
+        with pytest.raises(requests.exceptions.HTTPError) as wrapped_e:
+            page_loader.load(url, tmpdirname)
+        assert str(wrapped_e.value) == (  # noqa: WPS441
+            '404 Client Error: '
+            'None for url: https://hexlet.io/courses/status/404'  # noqa: WPS326
+        )
+
+
+def test_internal_server_error(requests_mock):  # noqa: D103
+    url = '{0}/status/500'.format(TEST_URL)
+    requests_mock.get(url, status_code=500)
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with pytest.raises(requests.exceptions.HTTPError) as wrapped_e:
+            page_loader.load(url, tmpdirname)
+        assert str(wrapped_e.value) == (  # noqa: WPS441
+            '500 Server Error: '
+            'None for url: https://hexlet.io/courses/status/500'  # noqa: WPS326
+        )
 
 
 def test_wrong_output_path(requests_mock):  # noqa: D103

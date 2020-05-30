@@ -3,45 +3,78 @@
 
 """Package entry point."""
 
+import argparse
+import logging
 import sys
 
 import requests
 
 import page_loader
-from page_loader import logger, parser
+
+DEBUG, INFO, WARNING, ERROR, CRITICAL = (
+    'debug', 'info', 'warning', 'error', 'critical',
+)
+
+get_log_level = {
+    DEBUG: logging.DEBUG,
+    INFO: logging.INFO,
+    WARNING: logging.WARNING,
+    ERROR: logging.ERROR,
+    CRITICAL: logging.CRITICAL,
+}.get
+
+
+def get_parser():  # noqa: D103
+    parser = argparse.ArgumentParser(description='Download the internet page')
+    parser.add_argument('url')
+    parser.add_argument(
+        '-O',
+        '--output',
+        type=str,
+        help='path to output folder (default: current working directory)',
+    )
+    parser.add_argument(
+        '--logging',
+        type=str,
+        default=ERROR,
+        choices=[
+            DEBUG,
+            INFO,
+            WARNING,
+            ERROR,
+            CRITICAL,
+        ],
+        help='set loggin level (default: {0})'.format(ERROR),
+    )
+    return parser
 
 
 def main():  # noqa: WPS213
-    """Run main function."""  # noqa: DAR401
-    args_parser = parser.get()
+    """Run main function."""
+    args_parser = get_parser()
     args = args_parser.parse_args()
 
-    logger.init(args.logging)
-    log = logger.get(__name__)
+    logging.basicConfig(
+        format='%(levelname)s:%(message)s',  # noqa: WPS323
+        level=get_log_level(args.logging),
+    )
 
-    log.debug(args.url)
-    log.debug(args.output)
+    logging.debug(args.url)
+    logging.debug(args.output)
 
     try:
         page_loader.load(args.url, args.output)
 
-    except requests.exceptions.RequestException:
-        print('Connection error.')
+    except requests.exceptions.RequestException as request_e:
+        logging.error('Connection error. {0}'.format(str(request_e)))
         sys.exit(1)
 
-    except ValueError as e:  # noqa: WPS111
-        if str(e) == 'Page not found.':
-            print(str(e))
-            sys.exit(1)
-        else:
-            raise
-
     except FileNotFoundError:
-        print('The output directory does not exist.')
+        logging.error('The output directory does not exist.')
         sys.exit(1)
 
     except PermissionError:
-        print('Permission denied: {0}'.format(args.output))
+        logging.error('Permission denied: {0}'.format(args.output))
         sys.exit(1)
 
 

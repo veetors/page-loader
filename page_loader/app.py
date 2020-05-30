@@ -2,6 +2,7 @@
 
 """Module with functions for load page."""
 
+import logging
 import os
 import re
 from multiprocessing.dummy import Pool as ThreadPool
@@ -10,14 +11,10 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from page_loader import logger
-
 REGEXP = '[^0-9a-zA-Z]+'
 URL = 'url'
 FILENAME = 'filename'
 OUTPUT_PATH = 'output_path'
-
-log = logger.get(__name__)
 
 
 def format_name(url, directory=False):  # noqa: D103
@@ -64,6 +61,13 @@ def format_html(html, url):  # noqa: WPS210, D103
 
 def download_asset(asset):  # noqa: D103
     response = requests.get(asset[URL], stream=True)
+
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as request_e:
+        logging.error('Download resource error. {0}'.format(str(request_e)))
+        return
+
     with open(
         os.path.join(asset[OUTPUT_PATH], asset[FILENAME]), 'wb',
     ) as output_file:
@@ -89,17 +93,12 @@ def load(url, output_path=None):  # noqa: WPS210
     Args:
         url (str): target url
         output_path (str): path for output file
-
-    Raises:
-        ValueError: page not found
     """
     if not output_path:
         output_path = os.getcwd()
 
     response = requests.get(url)
-
-    if response.status_code == 404:
-        raise ValueError('Page not found.')
+    response.raise_for_status()
 
     html_file_name = format_name(url)
     html, assets = format_html(response.text, url)
@@ -112,5 +111,4 @@ def load(url, output_path=None):  # noqa: WPS210
     assets_dir_path = os.path.join(
         output_path, format_name(url, directory=True),
     )
-    log.debug(assets_dir_path)
     download_assets(assets, assets_dir_path)
