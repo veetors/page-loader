@@ -34,7 +34,6 @@ def get_parser():  # noqa: D103
         help='path to output folder (default: current working directory)',
     )
     parser.add_argument(
-        '-L',
         '--logging',
         type=str,
         default=ERROR,
@@ -52,8 +51,8 @@ def get_parser():  # noqa: D103
 
 def main():  # noqa: WPS213
     """Run main function."""
-    args_parser = get_parser()
-    args = args_parser.parse_args()
+    parser = get_parser()
+    args = parser.parse_args()
 
     logging.basicConfig(
         format='%(levelname)s:%(message)s',  # noqa: WPS323
