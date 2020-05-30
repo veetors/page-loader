@@ -13,3 +13,6 @@
 
 ### Debug
 [![plain_json](https://asciinema.org/a/mxekgeN52hUqfpWxmPW35xfmb.png)](https://asciinema.org/a/mxekgeN52hUqfpWxmPW35xfmb)
+
+### Errors
+[![plain_json](https://asciinema.org/a/udppEvYSQBTF8TLqcH7TbwB7s.png)](https://asciinema.org/a/udppEvYSQBTF8TLqcH7TbwB7s)
