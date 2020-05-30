@@ -34,6 +34,7 @@ def get_parser():  # noqa: D103
         help='path to output folder (default: current working directory)',
     )
     parser.add_argument(
+        '-L',
         '--logging',
         type=str,
         default=ERROR,
