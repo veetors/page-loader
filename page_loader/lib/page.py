@@ -11,14 +11,16 @@ import requests
 from bs4 import BeautifulSoup
 from progress.bar import Bar
 
-REGEXP = '[^0-9a-zA-Z]+'
+from page_loader.lib.errors import NetworkError, StorageError
+
+ALPHANUM = re.compile(r'[^0-9a-zA-Z]+')
 URL = 'url'
 FILENAME = 'filename'
 
 
 def format_name(url, directory=False):  # noqa: D103
     parsed_url = urlparse(url)
-    base = re.sub(REGEXP, '-', parsed_url.netloc + parsed_url.path)
+    base = re.sub(ALPHANUM, '-', parsed_url.netloc + parsed_url.path)
     suffix = '_files' if directory else '.html'
 
     return base + suffix
@@ -26,7 +28,7 @@ def format_name(url, directory=False):  # noqa: D103
 
 def format_asset_name(path):  # noqa: D103
     filepath, extansion = os.path.splitext(path)
-    formated_path = re.sub(REGEXP, '-', filepath[1:])
+    formated_path = re.sub(ALPHANUM, '-', filepath[1:])
 
     return formated_path + extansion
 
@@ -46,10 +48,7 @@ def format_html(html, url):  # noqa: WPS210, D103
             continue
 
         full_asset_url = '{0}://{1}{2}'.format(scheme, netloc, asset_url)
-        assets.append({
-            URL: full_asset_url,
-            FILENAME: format_asset_name(asset_url),
-        })
+        assets.append((full_asset_url, format_asset_name(asset_url)))
         tag[current_attr] = '{0}/{1}'.format(
             format_name(url, directory=True),
             format_asset_name(asset_url),
@@ -61,8 +60,8 @@ def format_html(html, url):  # noqa: WPS210, D103
 def download_assets(assets, output_path):  # noqa: D103, WPS210
     os.mkdir(output_path)
 
-    for asset in assets:
-        response = requests.get(asset[URL], stream=True)
+    for url, filename in assets:
+        response = requests.get(url, stream=True)
 
         try:
             response.raise_for_status()
@@ -71,34 +70,49 @@ def download_assets(assets, output_path):  # noqa: D103, WPS210
             continue
 
         with open(
-            os.path.join(output_path, asset[FILENAME]), 'wb',
+            os.path.join(output_path, filename), 'wb',
         ) as output_file:
             content_length = int(response.headers.get('content-length', '0'))
             chunk_size = 128
             quantity_of_chunks = (content_length / chunk_size) + 1
-            with Bar(asset[FILENAME], max=quantity_of_chunks) as progress_bar:
+            with Bar(filename, max=quantity_of_chunks) as progress_bar:
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     output_file.write(chunk)
                     progress_bar.next()  # noqa: B305
 
 
-def load(url, output_path=None):  # noqa: WPS210
+def download(url, output_path=None):  # noqa: C901, WPS210
     """Load the page at the appropriate url and write to a file.
 
     Args:
         url (str): target url
         output_path (str): path for output file
+
+    Raises:
+        NetworkError: network error
+        StorageError: storage error
     """
     if not output_path:
         output_path = os.getcwd()
 
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = requests.get(url)
+    except requests.exceptions.RequestException as request_e:
+        raise NetworkError('Network error.') from request_e
+
+    try:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as http_e:
+        raise NetworkError('Network error.') from http_e
 
     html_file_name = format_name(url)
     html, assets = format_html(response.text, url)
-    with open(os.path.join(output_path, html_file_name), 'w') as html_file:
-        html_file.write(html)
+
+    try:
+        with open(os.path.join(output_path, html_file_name), 'w') as html_file:
+            html_file.write(html)
+    except (FileNotFoundError, PermissionError) as storage_e:
+        raise StorageError('Storage error.') from storage_e
 
     if not assets:
         return
@@ -106,4 +120,5 @@ def load(url, output_path=None):  # noqa: WPS210
     assets_dir_path = os.path.join(
         output_path, format_name(url, directory=True),
     )
+
     download_assets(assets, assets_dir_path)

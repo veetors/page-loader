@@ -2,19 +2,14 @@
 
 """Page-loader tests."""
 
-import logging
 import os
 import tempfile
 
 import pytest
 import requests
 
-import page_loader
-
-logging.basicConfig(
-    format='%(name)s:%(levelname)s:%(message)s',  # noqa: WPS323
-    level=logging.DEBUG,
-)
+from page_loader.lib import page
+from page_loader.lib.errors import NetworkError, StorageError
 
 TEST_URL = 'https://hexlet.io/courses'
 HTML_FILENAME = 'hexlet-io-courses.html'
@@ -57,11 +52,12 @@ ASSETS = (
 )
 
 
-def get_fixtures_path(filename):  # noqa: D103
-    return os.path.join(os.getcwd(), 'tests', 'fixtures', filename)
+def get_fixtures_path(filename):
+    curretn_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(curretn_dir, 'fixtures', filename)
 
 
-def test_main_without_assets(requests_mock):  # noqa: D103, WPS210
+def test_main_without_assets(requests_mock):  # noqa: WPS210
     with open(get_fixtures_path('without_assets_before.html')) as mock_file:
         mock_content = mock_file.read()
     requests_mock.get(TEST_URL, text=mock_content)
@@ -70,7 +66,7 @@ def test_main_without_assets(requests_mock):  # noqa: D103, WPS210
         expected = expected_file.read()
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        page_loader.load(TEST_URL, tmpdirname)
+        page.download(TEST_URL, tmpdirname)
 
         with open(os.path.join(tmpdirname, HTML_FILENAME)) as acctual_file:
             acctual = acctual_file.read()
@@ -79,7 +75,7 @@ def test_main_without_assets(requests_mock):  # noqa: D103, WPS210
 
 
 @pytest.mark.parametrize('asset', ASSETS)
-def test_main_with_assets(requests_mock, asset):  # noqa: D103, WPS210
+def test_main_with_assets(requests_mock, asset):  # noqa: WPS210
     with open(get_fixtures_path('with_assets_before.html')) as mock_html_file:
         mock_html_content = mock_html_file.read()
     requests_mock.get(TEST_URL, text=mock_html_content)
@@ -100,7 +96,7 @@ def test_main_with_assets(requests_mock, asset):  # noqa: D103, WPS210
         expected_asset_content = expected_asset_file.read()
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        page_loader.load(TEST_URL, tmpdirname)
+        page.download(TEST_URL, tmpdirname)
 
         with open(os.path.join(tmpdirname, HTML_FILENAME)) as acctual_html_file:
             acctual_html_content = acctual_html_file.read()
@@ -113,50 +109,42 @@ def test_main_with_assets(requests_mock, asset):  # noqa: D103, WPS210
         assert acctual_asset_content == expected_asset_content
 
 
-def test_page_not_found(requests_mock):  # noqa: D103
+def test_page_not_found(requests_mock):
     url = '{0}/status/404'.format(TEST_URL)
-    requests_mock.get(url, status_code=404)
+    requests_mock.get(url, status_code=404)  # noqa: WPS432
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        with pytest.raises(requests.exceptions.HTTPError) as wrapped_e:
-            page_loader.load(url, tmpdirname)
-        assert str(wrapped_e.value) == (  # noqa: WPS441
-            '404 Client Error: '
-            'None for url: https://hexlet.io/courses/status/404'  # noqa: WPS326
-        )
+        with pytest.raises(NetworkError) as wrapped_e:
+            assert page.download(url, tmpdirname)
 
 
-def test_internal_server_error(requests_mock):  # noqa: D103
+def test_internal_server_error(requests_mock):
     url = '{0}/status/500'.format(TEST_URL)
-    requests_mock.get(url, status_code=500)
+    requests_mock.get(url, status_code=500)  # noqa: WPS432
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        with pytest.raises(requests.exceptions.HTTPError) as wrapped_e:
-            page_loader.load(url, tmpdirname)
-        assert str(wrapped_e.value) == (  # noqa: WPS441
-            '500 Server Error: '
-            'None for url: https://hexlet.io/courses/status/500'  # noqa: WPS326
-        )
+        with pytest.raises(NetworkError) as wrapped_e:
+            assert page.download(url, tmpdirname)
 
 
-def test_wrong_output_path(requests_mock):  # noqa: D103
+def test_wrong_output_path(requests_mock):
     requests_mock.get(TEST_URL)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        with pytest.raises(FileNotFoundError):
-            assert page_loader.load(
+        with pytest.raises(StorageError):
+            assert page.download(
                 TEST_URL,
                 os.path.join(tmpdirname, 'wrong_path'),
             )
 
 
-def test_no_access_to_output_path(requests_mock):  # noqa: D103
+def test_no_access_to_output_path(requests_mock):
     requests_mock.get(TEST_URL)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        with pytest.raises(PermissionError):
-            os.chmod(tmpdirname, 0o400)
-            assert page_loader.load(
+        with pytest.raises(StorageError):
+            os.chmod(tmpdirname, 0o400)  # noqa: WPS432
+            assert page.download(
                 TEST_URL,
                 os.path.join(tmpdirname),
             )

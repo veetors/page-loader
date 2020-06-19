@@ -2,31 +2,28 @@
 
 """Filename generation tests."""
 
-from page_loader.app import format_name, format_asset_name
+from page_loader.lib.page import format_asset_name, format_name
 
 URL = 'https://hexlet.io/courses'
 JS_PATH = '/assets/application.js'
 CSS_PATH = '/assets/application.css'
 IMG_PATH = '/assets/image.jpg'
+EXPECTED_HTML_NAME = 'hexlet-io-courses.html'
+EXPECTED_ASSET_FOLDER_NAME = 'hexlet-io-courses_files'
+EXPECTED_JS_NAME = 'assets-application.js'
+EXPECTED_CSS_NAME = 'assets-application.css'
+EXPECTED_IMG_NAME = 'assets-image.jpg'
 
 
-def test_filename_from_path():  # noqa: D103
-    expected_js = 'assets-application.js'
-    expected_css = 'assets-application.css'
-    expected_img = 'assets-image.jpg'
-
-    assert format_asset_name(JS_PATH) == expected_js
-    assert format_asset_name(CSS_PATH) == expected_css
-    assert format_asset_name(IMG_PATH) == expected_img
+def test_filename_form_url():
+    assert format_name(URL) == EXPECTED_HTML_NAME
 
 
-def test_filename_form_url():  # noqa: D103
-    expected = 'hexlet-io-courses.html'
-    acctual = format_name(URL)
-    assert acctual == expected
+def test_dirname():
+    assert format_name(URL, directory=True) == EXPECTED_ASSET_FOLDER_NAME
 
 
-def test_dirname():   # noqa: D103
-    expected = 'hexlet-io-courses_files'
-    acctual = format_name(URL, directory=True)
-    assert acctual == expected
+def test_filename_from_path():
+    assert format_asset_name(JS_PATH) == EXPECTED_JS_NAME
+    assert format_asset_name(CSS_PATH) == EXPECTED_CSS_NAME
+    assert format_asset_name(IMG_PATH) == EXPECTED_IMG_NAME
