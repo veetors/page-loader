@@ -1,4 +1,6 @@
 # Page loader
+[![Maintainability](https://api.codeclimate.com/v1/badges/d800d311c65c32c837c5/maintainability)](https://codeclimate.com/github/veetors/page-loader-python/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/d800d311c65c32c837c5/test_coverage)](https://codeclimate.com/github/veetors/page-loader-python/test_coverage)
 [![Build Status](https://travis-ci.org/veetors/page-loader.svg?branch=master)](https://travis-ci.org/veetors/page-loader)
 [![wemake-python-styleguide](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 
