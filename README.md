@@ -7,14 +7,24 @@
 ## Installation
 `pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple veetors-page-loader`
 
-### Download page
-[![plain_json](https://asciinema.org/a/YsqT0O3nbQwMnIYW529dHcp0S.png)](https://asciinema.org/a/YsqT0O3nbQwMnIYW529dHcp0S)
+## Usage
+```
+usage: page-loader [-h] [-O OUTPUT]
+                   [--logging {debug,info,warning,error,critical}]
+                   url
 
-### Debug
-[![plain_json](https://asciinema.org/a/mxekgeN52hUqfpWxmPW35xfmb.png)](https://asciinema.org/a/mxekgeN52hUqfpWxmPW35xfmb)
+Download the internet page
 
-### Errors
-[![plain_json](https://asciinema.org/a/udppEvYSQBTF8TLqcH7TbwB7s.png)](https://asciinema.org/a/udppEvYSQBTF8TLqcH7TbwB7s)
+positional arguments:
+  url
 
-### Progress
-[![plain_json](https://asciinema.org/a/VO7KNOEFi6sirL6wLsMQiXODH.png)](https://asciinema.org/a/VO7KNOEFi6sirL6wLsMQiXODH)
+optional arguments:
+  -h, --help            show this help message and exit
+  -O OUTPUT, --output OUTPUT
+                        path to output folder (default: current working
+                        directory)
+  --logging {debug,info,warning,error,critical}
+                        set loggin level (default: error)
+```
+
+[![example](https://asciinema.org/a/qFSqWqZkRVvIqGcLN7c1jXftH.png)](https://asciinema.org/a/qFSqWqZkRVvIqGcLN7c1jXftH)
